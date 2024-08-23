@@ -85,11 +85,20 @@ void WIFIC_APMode(void){
 
 
 void WIFIC_stationMode(void){   
-  Serial.println("Trying STA mode."); 
+  Serial.print("\n\nTrying STA mode with "); 
+  Serial.print(st_ssid); 
+  Serial.print(" and ");
+  Serial.print(st_pass);
+
+  if(st_ssid[0] == 0){
+    Serial.println("accessPointMode");
+    WIFIC_APMode();
+  }
+
   WiFi.mode(WIFI_STA);  
   WiFi.begin(st_ssid, st_pass);
 
-  if( checkValidIp(stationIP)){
+    if( checkValidIp(stationIP)){
     IPAddress gateway(stationIP[0], stationIP[1],stationIP[2], 1);
     IPAddress dns(8,8,8,8);
     WiFi.config(stationIP, dns, gateway, IPAddress(255, 255, 255, 0));
@@ -102,7 +111,7 @@ void WIFIC_stationMode(void){
     delay(100);
     ESP.wdtFeed();       
     i--;
-  } 
+  }   
   
   if(WiFi.status() == WL_CONNECTED){
     stationIP = WiFi.localIP();

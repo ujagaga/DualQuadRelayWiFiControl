@@ -15,6 +15,7 @@
 #include "switch.h"
 #include "pinctrl.h"
 #include "ota.h"
+#include "web_socket.h"
 
 
 /* If we were writing HTML files, this would be the content. Here we use char arrays. */
@@ -37,84 +38,28 @@ static const char HTML_END[] PROGMEM = "</body></html>";
 
 static const char INDEX_HTML_0[] PROGMEM = R"(
 <style>
-.btn_b{border:0;border-radius:0.3rem;color:#fff;line-height:2.4rem;font-size:1.2rem;margin:2%;height:2.4rem;background-color:#1fa3ec;}
-.btn_cfg{border:0;border-radius:0.3rem;color:#fff;line-height:1.4rem;font-size:0.8rem;margin:1ch;height:2rem;width:15ch;background-color:#ff3300;}
-h1{text-align: center;font-size:1.5rem;}
-.slider{-webkit-appearance:none;appearance:none;width:90%;height:0.8em;border-radius:0.4em;background:#d3d3d3;outline:none;-webkit-transition:.2s;margin:10% 4%;padding:0;}
-.slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:3em;height:3em;background:white;border-radius:50%;box-shadow:inset -1em -1em 2em rgba(0,0,0,.5);}
-.slider::-moz-range-thumb{appearance:none;width:3em;height:3em;background:white;border-radius:50%;box-shadow: inset -1em -1em 2em rgba(0,0,0,.5);}
-.kolor{width:18%;margin:1%;padding-top:17%;float:left;border-radius:50%;}
-.row{width:100%;overflow: auto;}
-#cpick{width:100%;overflow: auto;}
-#samp{margin:1em auto;background:black;padding:0;overflow:hidden;width:102px;height:52px;border-radius:2em;border:2px solid black;}
-#sampc{margin:auto;padding:0;overflow:hidden;width:102px;text-align:center;}
-input[type="color"]{height:70px;width:150px;margin-left:-20px;margin-top:-10px;} 
+  .btn_b{border:0;border-radius:0.3rem;color:#fff;line-height:5rem;font-size:4rem;margin:2%;height:5rem;width:5rem;background-color:#1fa3ec;}
+  .btn_cfg{border:0;border-radius:0.3rem;color:#fff;line-height:1.4rem;font-size:0.8rem;margin:1ch;height:2rem;width:10rem;background-color:#ff3300;}      
+  .row{width:100%;overflow: auto;}      
 </style>
 <div class="contain">
   <div class="center_div">
 )";
 
 const char INDEX_HTML_1[] PROGMEM = R"(
-    <div id='cpick'></div>  
-    <div class="row">  
-        <div id='samp'>        
-          <div id='sampc'>
-            <input type="color" id='choose' onchange="setColor(this.value);"> 
-          </div>          
-        </div>
-    </div> 
-    <input type="range" min="0" max="8" value="8" class="slider" id="opac">
   </div>
   <hr>
   <p id='status'></p>  
-  <br><button class="btn_cfg" type="button" onclick="location.href='/selectap';">Configure wifi</button><br/>
+  <br>
+  <button class="btn_cfg" type="button" onclick="location.href='/selectap';">Configure wifi</button>
+  <button class="btn_cfg" type="button" onclick="location.href='/config';">Configure Buttons</button>
+  <br/>
 </div>
 <script>
-var colArr = ["#1abc9c","#2ecc71","#0000FF","#9b59b6","#34495e","#00FF00",
-"#27ae60","#2980b9","#8e44ad","#2c3e50","#f1c40f","#e67e22","#e74c3c",
-"#ecf0f1","#95a5a6","#f39c12","#d35400","#FF0000","#bdc3c7","#7f8c8d"];
-
-var cpDiv = document.getElementById('cpick');
-var opacity = document.getElementById('opac');
-var sample = document.getElementById('sampc');
-var choose = document.getElementById('choose');
-var p = [255, 255, 255];
-var cn=new WebSocket('ws://'+location.hostname+':81/');
-
-for(var i=0;i<colArr.length;i++){
-cDiv = document.createElement('div');
-cDiv.className = "kolor";
-cDiv.id = i;
-cDiv.style.background = colArr[i];
-cDiv.onclick = function() { setColor(colArr[this.id]); };
-cpDiv.append(cDiv);
-}
-
-opacity.addEventListener('change', function(e){
-setOpacity(opacity.value*12.5);
-}); 
-
-cn.onopen=function(){
-cn.send('{"CURRENT":"","STATUS":""}');    
-};
-cn.onmessage=function(e){
-var data=JSON.parse(e.data);
-if(data.hasOwnProperty('CURRENT')){       
-  opacity.value = data.CURRENT.OPA*0.08;  
-  sample.style.opacity = opacity.value*0.125;
-  choose.value = data.CURRENT.CLR;
-}
-if(data.hasOwnProperty('STATUS')){       
-document.getElementById('status').innerHTML=data.STATUS;       
-}}
-
-function setOpacity(lev){  
-  cn.send('{"CURRENT":{OPA:' + lev + '}}');
-}
-function setColor(clr){  
-  cn.send('{"CURRENT":{CLR:"' + clr + '"}}');
-}
-
+  function redirectTo(id) {
+    const timestamp = new Date().getTime();
+    location.href = `/trigger?id=${id}&t=${timestamp}`;
+  }
 </script>
 )";
 
@@ -206,13 +151,43 @@ void showStartPage() {
   Serial.println("showStartPage");
   String response = FPSTR(HTML_BEGIN);
   response += FPSTR(INDEX_HTML_0);
+  response += "<div class='row'>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(0)\"><</button>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(1)\">></button>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(2)\">&frac12;</button>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(3)\">x</button>";
+  response += "</div><hr>";
+
+  response += "<div class='row'>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(4)\"><</button>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(5)\">></button>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(6)\">&frac12;</button>";
+  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(7)\">x</button>";
+  response += "</div>";
+
   response += FPSTR(INDEX_HTML_1); 
   response += FPSTR(HTML_END);
   webServer.send(200, "text/html", response);  
 }
 
+static void trigger(void){  
+
+  if (webServer.hasArg("id")) {
+    String idStr = webServer.arg("id");
+    int id = idStr.toInt();
+
+    PINCTRL_trigger(id);
+
+    // Send a response
+    webServer.send(200, "text/plain", "OK: " + idStr);
+  } else {
+    // If "id" parameter is missing, send an error message
+    webServer.send(400, "text/plain", "Missing 'id' parameter");
+  }
+}
+
 static void showNotFound(void){
-    webServer.send(404, "text/html; charset=iso-8859-1","<html><head> <title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>"); 
+  webServer.send(404, "text/html; charset=iso-8859-1","<html><head> <title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>"); 
 }
 
 void showID( void ) {    
@@ -338,6 +313,7 @@ void HTTP_init(void){
   webServer.on("/id", showID);
   webServer.on("/favicon.ico", showNotFound);
   webServer.on("/selectap", selectAP);
+  webServer.on("/trigger", trigger);
   webServer.on("/wifisave", saveWiFi);
   webServer.on("/start_ota_update", startOtaUpdate);  
   webServer.onNotFound(showStartPage);

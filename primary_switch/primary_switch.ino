@@ -11,6 +11,7 @@
 #include "config.h"
 #include "pinctrl.h"
 #include "ota.h"
+#include "web_socket.h"
 
 
 static String statusMessage = "";         /* This is set and requested from other modules. */
@@ -30,6 +31,7 @@ void setup(void) {
   //ESP.eraseConfig();
   PINCTRL_init(); 
   WIFIC_init();
+  WS_init();  
   HTTP_init();
 }
 
@@ -38,6 +40,8 @@ void loop(void) {
   if(OTA_updateInProgress()){
     OTA_process();
   }else{
-    HTTP_process();  
+    HTTP_process();
+    PINCTRL_process();  
+    WS_process();
   }
 }
