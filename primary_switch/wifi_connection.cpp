@@ -90,11 +90,6 @@ void WIFIC_stationMode(void){
   Serial.print(" and ");
   Serial.print(st_pass);
 
-  if(st_ssid[0] == 0){
-    Serial.println("accessPointMode");
-    WIFIC_APMode();
-  }
-
   WiFi.mode(WIFI_STA);  
   WiFi.begin(st_ssid, st_pass);
 
@@ -219,11 +214,12 @@ void WIFIC_init(void){
    
   EEPROM.end();
 
-  String mac = WiFi.macAddress();
-  mac.replace(":", "");
-  String ApName = AP_NAME_PREFIX + mac;
+  String ApName = AP_NAME;
   ApName.toCharArray(myApName, ApName.length() + 1);
   
-  WIFIC_stationMode();   
-  
+  if(st_ssid[0] == 0){
+    WIFIC_APMode();
+  }else{
+    WIFIC_stationMode();  
+  }
 }

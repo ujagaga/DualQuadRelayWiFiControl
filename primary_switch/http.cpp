@@ -16,6 +16,7 @@
 #include "pinctrl.h"
 #include "ota.h"
 #include "web_socket.h"
+#include "udp.h"
 
 
 /* If we were writing HTML files, this would be the content. Here we use char arrays. */
@@ -38,7 +39,7 @@ static const char HTML_END[] PROGMEM = "</body></html>";
 
 static const char INDEX_HTML_0[] PROGMEM = R"(
 <style>
-  .btn_b{border:0;border-radius:0.3rem;color:#fff;line-height:5rem;font-size:4rem;margin:2%;height:5rem;width:5rem;background-color:#1fa3ec;}
+  .btn_b{border:0;border-radius:0.3rem;color:#fff;line-height:4rem;font-size:3rem;margin:2%;height:4rem;width:4rem;background-color:#1fa3ec;}
   .btn_cfg{border:0;border-radius:0.3rem;color:#fff;line-height:1.4rem;font-size:0.8rem;margin:1ch;height:2rem;width:10rem;background-color:#ff3300;}      
   .row{width:100%;overflow: auto;}      
 </style>
@@ -170,20 +171,19 @@ void showStartPage() {
   webServer.send(200, "text/html", response);  
 }
 
-static void trigger(void){  
-
+static void trigger(void){
   if (webServer.hasArg("id")) {
     String idStr = webServer.arg("id");
     int id = idStr.toInt();
 
-    PINCTRL_trigger(id);
+    if(id < 4){
+      PINCTRL_trigger(id);
+    }else{
+      UDP_send(id-4);
+    }    
+  } 
 
-    // Send a response
-    webServer.send(200, "text/plain", "OK: " + idStr);
-  } else {
-    // If "id" parameter is missing, send an error message
-    webServer.send(400, "text/plain", "Missing 'id' parameter");
-  }
+  showStartPage();  
 }
 
 static void showNotFound(void){

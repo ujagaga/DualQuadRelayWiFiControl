@@ -31,7 +31,7 @@ void PINCTRL_trigger(int pinId)
     return;
   }  
 
-  Serial.print("SW:");
+  Serial.print("SW ON:");
   Serial.println(pinId); 
 
   digitalWrite(pin_num[pinId], HIGH);
@@ -42,7 +42,12 @@ void PINCTRL_trigger(int pinId)
 void PINCTRL_process(){
   for(int i = 0; i < 4; ++i){
     if((millis() - PinWriteTimestamp[i]) > DEBOUNCE_TIMEOUT){
-      digitalWrite(pin_num[i], LOW);
+      if(PinWriteTimestamp[i] > 0){
+        digitalWrite(pin_num[i], LOW);
+        PinWriteTimestamp[i] = 0;
+        Serial.print("SW OFF:");
+        Serial.println(i);
+      }      
     }
   }
 }
