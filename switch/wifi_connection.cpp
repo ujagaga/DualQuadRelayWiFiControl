@@ -64,13 +64,13 @@ void WIFIC_APMode(void){
   }  
      
   Serial.println("\n" + wifi_statusMessage);
-
   Serial.println("\nStarting AP");  
+
   WiFi.mode(WIFI_AP);  
   WiFi.begin();
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   
-  if(WiFi.softAP(myApName)){
+  if(WiFi.softAP(myApName, PASSWORD)){
     wifi_statusMessage = "Running in AP mode. SSID: " + String(myApName) + ", IP:" + apIP.toString();  
   }else{
     wifi_statusMessage = "Failed to switch to AP mode.";
@@ -85,10 +85,7 @@ void WIFIC_APMode(void){
 
 
 void WIFIC_stationMode(void){   
-  Serial.print("\n\nTrying STA mode with "); 
-  Serial.print(st_ssid); 
-  Serial.print(" and ");
-  Serial.print(st_pass);
+  Serial.printf("\n\nTrying STA mode with %s and %s\r\n", st_ssid, st_pass);
 
   WiFi.mode(WIFI_STA);  
   WiFi.begin(st_ssid, st_pass);

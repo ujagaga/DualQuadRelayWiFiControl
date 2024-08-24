@@ -145,11 +145,19 @@ static const char REDIRECT_HTML[] PROGMEM = R"(
 </script> 
 )";
 
+static const char OTA_HTML[] PROGMEM = R"(
+<html><head> <title>OTA Update</title></head>
+<body>
+  <h1>OTA Update</h1>
+  <p>Starting the update server.</p>
+  <p>If no update starts in 10 minutes, will stop the update server and restore default functionallity.</p>
+</body>
+</html>
+)";
 /* Declaring a web server object. */
 static ESP8266WebServer webServer(80);
 
 void showStartPage() {    
-  Serial.println("showStartPage");
   String response = FPSTR(HTML_BEGIN);
   response += FPSTR(INDEX_HTML_0);
   response += "<div class='row'>";
@@ -186,9 +194,9 @@ static void trigger(void){
     if(id > 3){
       int realId = id - 4;
       PINCTRL_trigger(realId);
-    }    
-  } 
+    }  
 #endif
+  }
   showStartPage();  
 }
 
@@ -214,6 +222,9 @@ static void showStatusPage(bool goToHome = false) {
 }
 
 static void startOtaUpdate(void){
+  String response = FPSTR(OTA_HTML);
+  webServer.send(200, "text/html; charset=iso-8859-1", response); 
+  webServer.handleClient(); 
   OTA_init();    
 }
 
@@ -321,7 +332,7 @@ void HTTP_init(void){
   webServer.on("/selectap", selectAP);
   webServer.on("/trigger", trigger);
   webServer.on("/wifisave", saveWiFi);
-  webServer.on("/start_ota_update", startOtaUpdate);  
+  webServer.on("/update", startOtaUpdate);  
   webServer.onNotFound(showStartPage);
   
   webServer.begin();

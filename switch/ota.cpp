@@ -12,7 +12,9 @@
 #include "config.h"
 
 
+
 static bool updateStartedFlag = false;
+static uint32_t updateInitTimestamp = 0;
 
 bool OTA_updateInProgress(){
   return updateStartedFlag;
@@ -24,8 +26,9 @@ void OTA_init() {
   // ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(WIFIC_getDeviceName());
 
-  // No authentication by default
-//  ArduinoOTA.setPassword((const char *)"pass123");
+#ifdef ENABLE_UPDATE_PASSWORD
+  ArduinoOTA.setPassword(PASSWORD);
+#endif
    
   ArduinoOTA.onStart([]() {
     String type;
@@ -34,16 +37,15 @@ void OTA_init() {
     else // U_LittleFS
       type = "filesystem";
 
-    // NOTE: if updating LittleFS this would be the place to unmount LittleFS using LittleFS.end()
     Serial.println("Start updating " + type);
+    updateInitTimestamp = millis();
   });
   ArduinoOTA.onEnd([]() {
     updateStartedFlag = false;
     Serial.println("\nEnd");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.print("Progress:");
-    Serial.println(progress / (total / 100));
+    updateInitTimestamp = millis();
   });
   ArduinoOTA.onError([](ota_error_t error) {
     Serial.print("Error: ");
@@ -62,4 +64,10 @@ void OTA_init() {
 
 void OTA_process(void){
   ArduinoOTA.handle();
+
+  if((updateInitTimestamp > 0) && ((millis() - updateInitTimestamp) > UPDATE_TIMEOUT)){
+    ArduinoOTA.end();
+    updateStartedFlag = false;
+    updateInitTimestamp = 0;
+  }
 }

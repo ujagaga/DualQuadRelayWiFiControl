@@ -1,8 +1,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Comment this is device is secondary
-//#define DEV_IS_PRIMARY
+// Comment this if device is secondary
+#define DEV_IS_PRIMARY
+
+// Used for both WiFI AP and OTA Update
+#define PASSWORD                "abc131313"
+// Uncomment below line to enable OTA Update password
+//#define ENABLE_UPDATE_PASSWORD
 
 #define RELAY_1_PIN             16   
 #define RELAY_2_PIN             14   
@@ -10,6 +15,9 @@
 #define RELAY_4_PIN             13
 
 #define UDP_PORT                13131
+
+// 10 minutes to start the OTA update. If not, stop the service.
+#define UPDATE_TIMEOUT        (600000ul)
 
 #define AP_NAME_PREFIX          "Zaric_sw_"
 #ifdef DEV_IS_PRIMARY
