@@ -176,13 +176,19 @@ static void trigger(void){
     String idStr = webServer.arg("id");
     int id = idStr.toInt();
 
+#ifdef DEV_IS_PRIMARY
     if(id < 4){
       PINCTRL_trigger(id);
     }else{
-      UDP_send(id-4);
+      UDP_send(id);
+    }   
+#else
+    if(id > 3){
+      int realId = id - 4;
+      PINCTRL_trigger(realId);
     }    
   } 
-
+#endif
   showStartPage();  
 }
 

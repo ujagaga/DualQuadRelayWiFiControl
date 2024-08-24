@@ -21,22 +21,22 @@ void PINCTRL_init(){
   pinMode(pin_num[3], OUTPUT);
 }
 
-void PINCTRL_trigger(int pinId)
+void PINCTRL_trigger(int id)
 {
-  if((pinId < 0) || (pinId > 3)){
+  if((id < 0) || (id > 3)){
     return;
   }
 
-  if((millis() - PinWriteTimestamp[pinId]) < DEBOUNCE_TIMEOUT){
+  if((millis() - PinWriteTimestamp[id]) < DEBOUNCE_TIMEOUT){
     return;
   }  
 
   Serial.print("SW ON:");
-  Serial.println(pinId); 
+  Serial.println(id); 
 
-  digitalWrite(pin_num[pinId], HIGH);
+  digitalWrite(pin_num[id], HIGH);
 
-  PinWriteTimestamp[pinId] = millis();
+  PinWriteTimestamp[id] = millis();
 }
 
 void PINCTRL_process(){

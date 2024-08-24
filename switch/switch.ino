@@ -12,6 +12,7 @@
 #include "pinctrl.h"
 #include "ota.h"
 #include "web_socket.h"
+#include "udp.h"
 
 
 static String statusMessage = "";         /* This is set and requested from other modules. */
@@ -33,8 +34,11 @@ void setup(void) {
   WIFIC_init();
   WS_init();  
   HTTP_init();
-}
 
+  #ifndef DEV_IS_PRIMARY
+  UDP_init();
+  #endif
+}
 
 void loop(void) {  
   if(OTA_updateInProgress()){
@@ -43,5 +47,9 @@ void loop(void) {
     HTTP_process();
     PINCTRL_process();  
     WS_process();
+
+    #ifndef DEV_IS_PRIMARY
+    UDP_process();
+    #endif    
   }
 }
