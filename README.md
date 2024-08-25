@@ -56,5 +56,12 @@ To trigger the Over The Air update, just go to http page "/update".
 ## Note
 When configuring the device to use your home network, either use your router settings to assign a static IP address, or specify a static IP address in the WiFi settings. That way you will know the device address to connect to. 
 
+The module I used can be powered from either one of:
+1. 5V DC
+2. 7V to 30V DC
+3. 220V AC
+
+The relays all have 3 contacts: Normally Open, Normally Closed and Common.
+
 ## Status
 Finished

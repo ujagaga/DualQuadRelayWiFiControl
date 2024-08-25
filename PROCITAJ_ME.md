@@ -52,5 +52,12 @@ Da biste pokrenuli "Over The Air" ažuriranje, samo idite na http stranicu "/upd
 ## Napomena
 Kada konfigurišete uređaj da koristi vašu kućnu mrežu, ili koristite postavke rutera da dodelite statičku IP adresu ili navedite statičku IP adresu u WiFi postavkama. Na taj način ćete znati adresu uređaja na koji ćete se povezati.
 
+Modul koji sam koristio moze da se napaja iz bilo kojeg od sledecih izvora:
+1. 5V jednosmerno
+2. 7V do 30V jednosmerno
+3. 220V naizmenicno
+
+Svi relei imaju po 3 kontakta: mirni (NC), radni (NO) i zajednicki (COM).
+
 ## Status
 Zavrseno
