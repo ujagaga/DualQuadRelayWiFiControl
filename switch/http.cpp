@@ -127,6 +127,31 @@ static const char APLIST_HTML_2[] PROGMEM = R"(
 </script>
 )";
 
+static const char BTN_CFG_HTML[] PROGMEM = R"( 
+  <h1>Select Button Display</h1>
+
+  <form method='get' action='config'>
+    <label for="prim">Primary buttons:</label>
+
+    <select name="prim" id="prim">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4" selected>4</option>
+    </select></br>
+
+    <label for="sec">Secondary buttons:</label>
+    <select name="sec" id="sec">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4" selected>4</option>
+    </select><br>
+    <button type='submit'>save</button>        
+  </form>
+)";
+
 static const char REDIRECT_HTML[] PROGMEM = R"(
 <p id="tmr"></p>
 <script>
@@ -150,31 +175,77 @@ static const char OTA_HTML[] PROGMEM = R"(
 <body>
   <h1>OTA Update</h1>
   <p>Starting the update server.</p>
-  <p>If no update starts in 10 minutes, will stop the update server and restore default functionallity.</p>
+  <p>If no update starts in 5 minutes, will stop the update server and restore default functionallity.</p>
 </body>
 </html>
 )";
 /* Declaring a web server object. */
 static ESP8266WebServer webServer(80);
+static int maxPrimNumOfBtns = 4;
+static int maxSecNumOfBtns = 4;
 
 void showStartPage() {    
   String response = FPSTR(HTML_BEGIN);
   response += FPSTR(INDEX_HTML_0);
   response += "<div class='row'>";
   response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(0)\"><</button>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(1)\">></button>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(2)\">&frac12;</button>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(3)\">x</button>";
-  response += "</div><hr>";
+  if(maxPrimNumOfBtns > 1){
+    response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(1)\">></button>";
+  }
+  if(maxPrimNumOfBtns > 2){
+    response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(2)\">&frac12;</button>";
+  }
+  if(maxPrimNumOfBtns > 3){
+    response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(3)\">x</button>";
+  }
 
-  response += "<div class='row'>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(4)\"><</button>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(5)\">></button>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(6)\">&frac12;</button>";
-  response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(7)\">x</button>";
+  if(maxSecNumOfBtns > 0){
+    response += "</div><hr>";
+
+    response += "<div class='row'>";
+    response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(4)\"><</button>";
+    if(maxSecNumOfBtns > 1){
+      response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(5)\">></button>";
+    }
+    if(maxSecNumOfBtns > 2){
+      response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(6)\">&frac12;</button>";
+    }
+    if(maxSecNumOfBtns > 3){
+      response += "<button class=\"btn_b\" type=\"button\" onclick=\"redirectTo(7)\">x</button>";
+    }
+  }
   response += "</div>";
 
   response += FPSTR(INDEX_HTML_1); 
+  response += FPSTR(HTML_END);
+  webServer.send(200, "text/html", response);  
+}
+
+void buttonConfig() {   
+  String response = FPSTR(HTML_BEGIN);
+
+  if (webServer.hasArg("prim")) {
+    String primNumOfButtons = webServer.arg("prim");
+    int primNo = primNumOfButtons.toInt();
+
+    if((primNo > 0) && (primNo < 5)){
+      maxPrimNumOfBtns = primNo;
+    }        
+
+    if (webServer.hasArg("sec")) {
+      String secNumOfButtons = webServer.arg("sec");
+      int secNo = secNumOfButtons.toInt();
+
+      if((secNo >= 0) && (secNo < 5)){
+        maxSecNumOfBtns = secNo;
+      }       
+    }
+    response += "<p>Successfully saved</p>";
+    response += FPSTR(REDIRECT_HTML);
+  }else{
+    response += FPSTR(BTN_CFG_HTML);
+  }  
+  
   response += FPSTR(HTML_END);
   webServer.send(200, "text/html", response);  
 }
@@ -327,6 +398,7 @@ void HTTP_process(void){
 
 void HTTP_init(void){ 
   webServer.on("/", showStartPage);
+  webServer.on("/config", buttonConfig);
   webServer.on("/id", showID);
   webServer.on("/favicon.ico", showNotFound);
   webServer.on("/selectap", selectAP);

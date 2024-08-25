@@ -22,7 +22,7 @@ void PINCTRL_init(){
 }
 
 void PINCTRL_trigger(int id)
-{
+{  
   if((id < 0) || (id > 3)){
     return;
   }
@@ -32,9 +32,7 @@ void PINCTRL_trigger(int id)
   }  
 
   Serial.printf("SW ON:%d\r\n", id);
-
   digitalWrite(pin_num[id], HIGH);
-
   PinWriteTimestamp[id] = millis();
 }
 

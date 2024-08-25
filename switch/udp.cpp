@@ -1,6 +1,7 @@
 #include <WiFiUdp.h>
 #include "config.h"
 #include "pinctrl.h"
+#include <Arduino.h>
 
 static WiFiUDP Udp;                             /* UDP object used for receiving the ping message. */
 static char incomingPacket[255];                /* buffer for incoming packets */
@@ -18,9 +19,12 @@ void UDP_process(){
     // receive incoming UDP packets
     int len = Udp.read(incomingPacket, String(expectedMsg).length() + 1);
     incomingPacket[len] = 0;
+
+    Serial.print("UDP RX:");
+    Serial.println(incomingPacket);
     
     if(String(incomingPacket).startsWith(expectedMsg)){
-      int id = (int)incomingPacket[len -1];
+      int id = ((int)incomingPacket[len -1]) - '0';
       if(id > 3){
         id -= 4;
       }
