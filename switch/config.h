@@ -33,6 +33,8 @@
 #define SSID_SIZE               (32)
 #define STATION_IP_ADDR         (SSID_EEPROM_ADDR + SSID_SIZE)
 #define STATION_IP_SIZE         (4)
-#define EEPROM_SIZE             (WIFI_PASS_SIZE + SSID_SIZE + STATION_IP_SIZE)   
+#define BTN_NUM_ADDR            (STATION_IP_ADDR + STATION_IP_SIZE)
+#define BTN_NUM_SIZE            (2)
+#define EEPROM_SIZE             (WIFI_PASS_SIZE + SSID_SIZE + STATION_IP_SIZE, BTN_NUM_SIZE)   
 
 #endif

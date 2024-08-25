@@ -181,10 +181,10 @@ static const char OTA_HTML[] PROGMEM = R"(
 )";
 /* Declaring a web server object. */
 static ESP8266WebServer webServer(80);
-static int maxPrimNumOfBtns = 4;
-static int maxSecNumOfBtns = 4;
+static uint8_t maxPrimNumOfBtns = 4;
+static uint8_t maxSecNumOfBtns = 4;
 
-void showStartPage() {    
+void showStartPage() { 
   String response = FPSTR(HTML_BEGIN);
   response += FPSTR(INDEX_HTML_0);
   response += "<div class='row'>";
@@ -226,7 +226,7 @@ void buttonConfig() {
 
   if (webServer.hasArg("prim")) {
     String primNumOfButtons = webServer.arg("prim");
-    int primNo = primNumOfButtons.toInt();
+    int8_t primNo = primNumOfButtons.toInt();
 
     if((primNo > 0) && (primNo < 5)){
       maxPrimNumOfBtns = primNo;
@@ -234,12 +234,19 @@ void buttonConfig() {
 
     if (webServer.hasArg("sec")) {
       String secNumOfButtons = webServer.arg("sec");
-      int secNo = secNumOfButtons.toInt();
+      int8_t secNo = secNumOfButtons.toInt();
 
       if((secNo >= 0) && (secNo < 5)){
         maxSecNumOfBtns = secNo;
       }       
     }
+
+    EEPROM.begin(EEPROM_SIZE);  
+    EEPROM.write(BTN_NUM_ADDR, maxPrimNumOfBtns);
+    EEPROM.write(BTN_NUM_ADDR+1, maxSecNumOfBtns);      
+    EEPROM.commit();
+    EEPROM.end();
+
     response += "<p>Successfully saved</p>";
     response += FPSTR(REDIRECT_HTML);
   }else{
@@ -397,6 +404,20 @@ void HTTP_process(void){
 }
 
 void HTTP_init(void){ 
+  EEPROM.begin(EEPROM_SIZE);
+
+  uint8_t maxBtnCount = EEPROM.read(BTN_NUM_ADDR);  
+  if((maxBtnCount > 0) && (maxBtnCount < 5)){
+    maxPrimNumOfBtns = maxBtnCount;
+  }
+
+  maxBtnCount = EEPROM.read(BTN_NUM_ADDR+1);
+  if((maxBtnCount >= 0) && (maxBtnCount < 5)){
+    maxSecNumOfBtns = maxBtnCount;
+  }
+
+  EEPROM.end();
+
   webServer.on("/", showStartPage);
   webServer.on("/config", buttonConfig);
   webServer.on("/id", showID);
