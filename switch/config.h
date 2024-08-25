@@ -2,17 +2,17 @@
 #define CONFIG_H
 
 // Comment this if device is secondary
-//#define DEV_IS_PRIMARY
+#define DEV_IS_PRIMARY
 
 // Used for both WiFI AP and OTA Update
 #define PASSWORD                "abc131313"
 // Uncomment below line to enable OTA Update password
 //#define ENABLE_UPDATE_PASSWORD
 
-#define RELAY_1_PIN             16   
-#define RELAY_2_PIN             14   
-#define RELAY_3_PIN             12   
-#define RELAY_4_PIN             13
+#define RELAY_4_PIN             16   
+#define RELAY_3_PIN             14   
+#define RELAY_2_PIN             12   
+#define RELAY_1_PIN             13
 
 #define UDP_PORT                13131
 
@@ -35,6 +35,6 @@
 #define STATION_IP_SIZE         (4)
 #define BTN_NUM_ADDR            (STATION_IP_ADDR + STATION_IP_SIZE)
 #define BTN_NUM_SIZE            (2)
-#define EEPROM_SIZE             (WIFI_PASS_SIZE + SSID_SIZE + STATION_IP_SIZE, BTN_NUM_SIZE)   
+#define EEPROM_SIZE             (WIFI_PASS_SIZE + SSID_SIZE + STATION_IP_SIZE + BTN_NUM_SIZE)   
 
 #endif

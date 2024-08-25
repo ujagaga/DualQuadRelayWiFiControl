@@ -5,7 +5,7 @@
  *  WiFi connection module. At startup connects to a user configured access point. If none is configured, creates its own access point to provide a way to adjust settings.
  */
 #include <ESP8266WiFi.h>
-#include <EEPROM.h>
+#include <ESP_EEPROM.h>
 #include "config.h"
 
 static char myApName[32] = {0};    /* Array to form AP name based on read MAC */
@@ -85,25 +85,26 @@ void WIFIC_APMode(void){
 
 
 void WIFIC_stationMode(void){   
-  Serial.printf("\n\nTrying STA mode with %s and %s\r\n", st_ssid, st_pass);
+  Serial.printf("\n\nTrying STA mode with [%s] and [%s]\r\n", st_ssid, st_pass);
 
-  WiFi.mode(WIFI_STA);  
   WiFi.begin(st_ssid, st_pass);
 
-    if( checkValidIp(stationIP)){
+  if( checkValidIp(stationIP)){
     IPAddress gateway(stationIP[0], stationIP[1],stationIP[2], 1);
     IPAddress dns(8,8,8,8);
     WiFi.config(stationIP, dns, gateway, IPAddress(255, 255, 255, 0));
   }
   
   /* set timeout to 30 seconds*/
-  int i = 300;  
+  int i = 30;  
  
   while((i > 0) && (WiFi.status() != WL_CONNECTED)){
-    delay(100);
+    delay(1000);
     ESP.wdtFeed();       
     i--;
-  }   
+    Serial.print(".");
+  } 
+  Serial.println("");  
   
   if(WiFi.status() == WL_CONNECTED){
     stationIP = WiFi.localIP();
@@ -128,15 +129,14 @@ void WIFIC_setStSSID(String new_ssid){
   
   uint16_t addr;
   
-  for(addr = 0; addr < new_ssid.length(); addr++){
-    EEPROM.write(addr + SSID_EEPROM_ADDR, new_ssid[addr]);
+  for(addr = 0; addr < new_ssid.length(); addr++){    
+    EEPROM.put(addr + SSID_EEPROM_ADDR, new_ssid[addr]);
     st_ssid[addr] = new_ssid[addr];
   }
-  EEPROM.write(addr + SSID_EEPROM_ADDR, 0);  
+  EEPROM.put(addr + SSID_EEPROM_ADDR, 0);  
   st_ssid[addr] = 0;
   
   EEPROM.commit();
-  EEPROM.end();
 }
 
 String WIFIC_getStPass(void){
@@ -147,15 +147,14 @@ void WIFIC_setStPass(String new_pass){
   EEPROM.begin(EEPROM_SIZE);
   
   uint16_t addr;
-  for(addr = 0; addr < new_pass.length(); addr++){
-    EEPROM.write(addr + WIFI_PASS_EEPROM_ADDR, new_pass[addr]);
+  for(addr = 0; addr < new_pass.length(); addr++){   
+    EEPROM.put(addr + WIFI_PASS_EEPROM_ADDR, new_pass[addr]);
     st_pass[addr] = new_pass[addr];
   }
-  EEPROM.write(addr + WIFI_PASS_EEPROM_ADDR, 0);
+  EEPROM.put(addr + WIFI_PASS_EEPROM_ADDR, 0);
   st_pass[addr] = 0;
     
   EEPROM.commit();
-  EEPROM.end();
 }
 
 IPAddress WIFIC_getStIP(void){
@@ -167,13 +166,12 @@ void WIFIC_setStIP(IPAddress newStationIP){
   
   EEPROM.begin(EEPROM_SIZE);
     
-  EEPROM.write(STATION_IP_ADDR + 0, newStationIP[0]);
-  EEPROM.write(STATION_IP_ADDR + 1, newStationIP[1]);
-  EEPROM.write(STATION_IP_ADDR + 2, newStationIP[2]);
-  EEPROM.write(STATION_IP_ADDR + 3, newStationIP[3]);
+  EEPROM.put(STATION_IP_ADDR + 0, newStationIP[0]);
+  EEPROM.put(STATION_IP_ADDR + 1, newStationIP[1]);
+  EEPROM.put(STATION_IP_ADDR + 2, newStationIP[2]);
+  EEPROM.put(STATION_IP_ADDR + 3, newStationIP[3]);
   
   EEPROM.commit();
-  EEPROM.end();
 }
 
 
@@ -184,7 +182,7 @@ void WIFIC_init(void){
   uint16_t i = 0;
   
   do{
-    st_pass[i] = EEPROM.read(i + WIFI_PASS_EEPROM_ADDR);
+    EEPROM.get(i + WIFI_PASS_EEPROM_ADDR, st_pass[i]);
     if((st_pass[i] < 32) || (st_pass[i] > 126)){
       /* Non printable character */
       break;
@@ -195,7 +193,7 @@ void WIFIC_init(void){
 
   i = 0;
   do{
-    st_ssid[i] = EEPROM.read(i + SSID_EEPROM_ADDR);
+    EEPROM.get(i + SSID_EEPROM_ADDR, st_ssid[i]);
     if((st_ssid[i] < 32) || (st_ssid[i] > 126)){
       /* Non printable character */
       break;
@@ -204,16 +202,14 @@ void WIFIC_init(void){
   }while(i < SSID_SIZE);
   st_ssid[i] = 0;
 
-  stationIP[0] = EEPROM.read(STATION_IP_ADDR + 0);
-  stationIP[1] = EEPROM.read(STATION_IP_ADDR + 1);
-  stationIP[2] = EEPROM.read(STATION_IP_ADDR + 2);
-  stationIP[3] = EEPROM.read(STATION_IP_ADDR + 3);
+  EEPROM.get(STATION_IP_ADDR + 0, stationIP[0]);
+  EEPROM.get(STATION_IP_ADDR + 1, stationIP[1]);
+  EEPROM.get(STATION_IP_ADDR + 2, stationIP[2]);
+  EEPROM.get(STATION_IP_ADDR + 3, stationIP[3]);
    
-  EEPROM.end();
-
   String ApName = AP_NAME;
-  ApName.toCharArray(myApName, ApName.length() + 1);
-  
+  ApName.toCharArray(myApName, ApName.length() + 1);   
+
   if(st_ssid[0] == 0){
     WIFIC_APMode();
   }else{

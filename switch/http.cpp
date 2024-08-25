@@ -6,7 +6,7 @@
  */
  
 #include <ESP8266WebServer.h>
-#include <EEPROM.h>
+#include <ESP_EEPROM.h>
 #include <ESP8266HTTPClient.h>
 #include <pgmspace.h>
 #include "http.h"
@@ -39,9 +39,9 @@ static const char HTML_END[] PROGMEM = "</body></html>";
 
 static const char INDEX_HTML_0[] PROGMEM = R"(
 <style>
-  .btn_b{border:0;border-radius:0.3rem;color:#fff;line-height:4rem;font-size:3rem;margin:2%;height:4rem;width:4rem;background-color:#1fa3ec;}
+  .btn_b{border:0;border-radius:0.3rem;color:#fff;line-height:4rem;font-size:3rem;margin:1%;height:4rem;width:4rem;background-color:#1fa3ec;flex:1;}
   .btn_cfg{border:0;border-radius:0.3rem;color:#fff;line-height:1.4rem;font-size:0.8rem;margin:1ch;height:2rem;width:10rem;background-color:#ff3300;}      
-  .row{width:100%;overflow: auto;}      
+  .row{display: flex;justify-content: space-between;align-items: center;}      
 </style>
 <div class="contain">
   <div class="center_div">
@@ -242,10 +242,9 @@ void buttonConfig() {
     }
 
     EEPROM.begin(EEPROM_SIZE);  
-    EEPROM.write(BTN_NUM_ADDR, maxPrimNumOfBtns);
-    EEPROM.write(BTN_NUM_ADDR+1, maxSecNumOfBtns);      
+    EEPROM.put(BTN_NUM_ADDR, maxPrimNumOfBtns);
+    EEPROM.put(BTN_NUM_ADDR+1, maxSecNumOfBtns);      
     EEPROM.commit();
-    EEPROM.end();
 
     response += "<p>Successfully saved</p>";
     response += FPSTR(REDIRECT_HTML);
@@ -345,7 +344,7 @@ static void saveWiFi(void){
 
     st_ssid = WIFIC_getStSSID();
     st_pass = WIFIC_getStPass();
-    stationIP = WIFIC_getStIP();
+    stationIP = WIFIC_getStIP();    
 
     if(!st_ssid.equals(ssid) || !st_pass.equals(pass)){
       cmpFlag = false;
@@ -366,7 +365,7 @@ static void saveWiFi(void){
   
   WIFIC_setStSSID(ssid);
   WIFIC_setStPass(pass);
-  WIFIC_setStIP(newStationIP);
+  WIFIC_setStIP(newStationIP); 
 
   String http_statusMessage;
   
@@ -396,6 +395,7 @@ static void saveWiFi(void){
   /* WiFI config changed. Restart to apply. 
    Note: ESP.restart is buggy after programming the chip. 
    Just reset once after programming to get stable results. */
+
   ESP.restart();
 }
 
@@ -406,17 +406,17 @@ void HTTP_process(void){
 void HTTP_init(void){ 
   EEPROM.begin(EEPROM_SIZE);
 
-  uint8_t maxBtnCount = EEPROM.read(BTN_NUM_ADDR);  
+  uint8_t maxBtnCount;
+  EEPROM.get(BTN_NUM_ADDR, maxBtnCount); 
+
   if((maxBtnCount > 0) && (maxBtnCount < 5)){
     maxPrimNumOfBtns = maxBtnCount;
   }
 
-  maxBtnCount = EEPROM.read(BTN_NUM_ADDR+1);
+  EEPROM.get(BTN_NUM_ADDR+1, maxBtnCount);
   if((maxBtnCount >= 0) && (maxBtnCount < 5)){
     maxSecNumOfBtns = maxBtnCount;
   }
-
-  EEPROM.end();
 
   webServer.on("/", showStartPage);
   webServer.on("/config", buttonConfig);

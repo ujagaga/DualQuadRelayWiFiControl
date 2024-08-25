@@ -24,7 +24,7 @@ To trigger the Over The Air update, just go to http page "/update".
         https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
 
-2. Install additional libraries: "ArduinoJson" and "WebSockets"
+2. Install additional libraries: "ArduinoJson", "WebSockets" and "ESP_EEPROM"
 3. In "config.h" adjust as needed:
 - If building for the primary module, uncomment
 
@@ -50,11 +50,11 @@ To trigger the Over The Air update, just go to http page "/update".
 6. build and program using a USB UART module. For any further firmware updates, you can use the Over The Air update. To use it:
 - Connect to device's WiFi network or your home LAN if you have already configured your device to connect to it.
 - Using your web browser, go to "/update" page to trigger the update.
-- Restart Arduino IDE so it can detect the new update server and list it in "Tools/Port" for you to select. 
+- It takes a while, up to 30 seconds for Arduino IDE to detect the new update server and list it in "Tools/Port" for you to select. 
 - Click on the program button in Arduino IDE. The Arduino IDE will ask for password. If you have not set any, just use what ever.
 
 ## Note
 When configuring the device to use your home network, either use your router settings to assign a static IP address, or specify a static IP address in the WiFi settings. That way you will know the device address to connect to. 
 
 ## Status
-Operational, but still testing
+Finished
