@@ -1,0 +1,136 @@
+body{
+    padding: 0;
+    margin: 0;
+}
+
+.clearfix::after, .clearfix::before {
+  content: "";
+  clear: both;
+  display: table;
+  width: 0;
+  border: none;
+  margin: 0;
+}
+
+.container{
+    position: relative;
+    margin: 0 auto;
+    padding: 20px 5px;
+    text-align: center;
+    max-width: 600px;
+}
+
+.row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.big_btn{
+    border:0;
+    border-radius:0.3rem;
+    color:#fff;
+    line-height:4rem;
+    font-size:3rem;
+    margin:1%;
+    padding:1rem;
+    width:4rem;
+    background-color:#1fa3ec;
+    flex:1;
+}
+.nav_btn{
+    color: white;
+    background-color: orange;
+    display: inline-block;
+    padding: 5px;
+    border-radius: 5px;
+    text-decoration: none;
+    float: left;
+    margin: 5px;
+}
+
+.small_btn{
+    color: white;
+    background-color: orange;
+    display: inline-block;
+    padding: 5px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin: 5px;
+}
+
+.small_red_btn{
+    color: white;
+    background-color: red;
+    display: inline-block;
+    padding: 5px;
+    border-radius: 50%;
+    text-decoration: none;
+    float: left;
+    margin: 5px;
+    width: 1em;
+    height: 1em;
+}
+
+.title_link{
+    text-decoration: none;
+    color: #BA4A00;
+}
+.red_notification{
+    color: red;
+}
+table{
+    width: 100%;
+}
+
+.inner_container{
+    width: 100%;
+    padding: 0;
+    margin: 20px 0;
+}
+.semaphore{
+    color: white;
+    border-radius: 50%;
+    width: 1em;
+    height: 1em;
+}
+
+.green{
+    background-color: green;
+}
+.red{
+    background-color: red;
+}
+table{
+    width: 100%;
+}
+td p{
+    text-align: center;
+    margin: auto;
+}
+
+td:nth-child(1), th:nth-child(1) {
+    text-align: left;
+}
+
+td:nth-child(2), th:nth-child(2) {
+    width: 2em;
+}
+.to_right{
+    float: right;
+}
+
+.form-group {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    margin-right: 1rem;
+}
+
+.form-group select {
+    margin-left: 0.5rem;
+}
