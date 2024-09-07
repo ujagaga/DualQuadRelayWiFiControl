@@ -4,7 +4,9 @@ from hashlib import sha256
 import re
 from datetime import datetime
 import sys
-
+import smtplib
+import settings
+import ssl
 
 DATE_FORMAT = "%Y-%m-%d"
 

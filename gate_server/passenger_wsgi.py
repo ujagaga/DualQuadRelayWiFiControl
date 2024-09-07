@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-pip install flask requests flask_mail mysql-connector-python
+pip install flask requests flask_mail
 '''
 from flask import Flask, g, render_template, request, flash, url_for, redirect, make_response, abort, Response, stream_with_context
 from flask_mail import Message, Mail
@@ -27,7 +27,7 @@ application.config['MAIL_PORT'] = 465
 application.config['MAIL_USERNAME'] = settings.MAIL_USERNAME
 application.config["MAIL_PASSWORD"] = settings.MAIL_PASSWORD
 application.config["MAIL_USE_TLS"] = False
-application.config["MAIL_USE_SSL"] = True
+application.config["MAIL_USE_SSL"] = False
 
 mail = Mail(application)
 
@@ -200,10 +200,11 @@ def reset_password_post():
         base_url = request.base_url.replace("reset_password", "set_password")
 
         reset_link = f"{base_url}?token={token}"
-
         mail_message = Message('Reset unlock portal password.', sender="do_not_reply@door.lock",
                                recipients=[email])
-        mail_message.html = "<p>To reset your password, click the following <a href='{}'>link</a>.</p>".format(reset_link)
+        mail_message.html = "<p>To reset your password, klick the following <a href='{}'>link</a>.</p>".format(
+            reset_link)
+
         mail.send(mail_message)
 
     return redirect(url_for('index'))
