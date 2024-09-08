@@ -11,7 +11,7 @@ def init_database():
         # Database does not exist. Create one
         db = sqlite3.connect(db_path)
 
-        sql = "create table users (email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, token TEXT UNIQUE, data TEXT)"
+        sql = "create table users (email TEXT NOT NULL UNIQUE, token TEXT UNIQUE, data TEXT)"
         db.execute(sql)
         db.commit()
 
@@ -44,8 +44,8 @@ def exec_db(db, query):
         db.commit()
 
 
-def add_user(db, email: str, password: str = None):
-    sql = f"INSERT INTO users(email, password) VALUES ('{email}', '{password}')"
+def add_user(db, email: str):
+    sql = f"INSERT INTO users(email) VALUES ('{email}')"
 
     try:
         exec_db(db, sql)
@@ -70,6 +70,9 @@ def get_user(db, email: str = None, token: str = None):
         sql = f"SELECT * FROM users WHERE email = '{email}'"
     elif token:
         sql = f"SELECT * FROM users WHERE token = '{token}'"
+    else:
+        one = False
+        sql = "SELECT * FROM users"
 
     try:
         user = query_db(db, sql, one=one)
@@ -117,7 +120,9 @@ def get_device(db, name: str = None, email: str = None):
         sql = f"SELECT * FROM devices WHERE name = '{name}'"
         one = True
     else:
-        sql = f"SELECT * FROM devices WHERE email = '{email}'"
+        #  Make sure to store in database emails surrounded with '|' to prevent
+        #  matching emails containing the requested one.
+        sql = f"SELECT * FROM devices WHERE email LIKE '%|{email}|%'"
         one = False
 
     try:
@@ -130,11 +135,13 @@ def get_device(db, name: str = None, email: str = None):
     return device
 
 
-def update_device(db, name: str, ping_at: str = None, set_at: str = None, relay_id: str = None):
+def update_device(db, name: str, ping_at: str = None, set_at: str = None, relay_id: str = None, email: str = None):
     device = get_device(db=db, name=name)
 
     if device:
-        if ping_at:
+        if email:
+            sql = "UPDATE devices SET email = '{}' WHERE name = '{}'".format(email, name)
+        elif ping_at:
             sql = "UPDATE devices SET ping_at = '{}' WHERE name = '{}'".format(ping_at, name)
         else:
             sql = "UPDATE devices SET set_at = '{}', relay_id = '{}' WHERE name = '{}'".format(set_at, relay_id, name)
@@ -144,3 +151,13 @@ def update_device(db, name: str, ping_at: str = None, set_at: str = None, relay_
         except Exception as exc:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print("ERROR updating user in db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
+
+
+def delete_device(db, name: str):
+    sql = f"DELETE FROM devices WHERE name = '{name}'"
+
+    try:
+        exec_db(db, sql)
+    except Exception as exc:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        print("ERROR removing device from db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)

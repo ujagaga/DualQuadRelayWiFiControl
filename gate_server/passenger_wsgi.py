@@ -2,34 +2,45 @@
 # -*- coding: utf-8 -*-
 
 '''
-pip install flask requests flask_mail
+pip install flask authlib requests
 '''
-from flask import Flask, g, render_template, request, flash, url_for, redirect, make_response, abort, Response, stream_with_context
-from flask_mail import Message, Mail
+from flask import Flask, g, render_template, request, flash, url_for, redirect, make_response, Response, stream_with_context
 import time
 import json
 import sys
 import os
-import settings
 import database
 import helper
+from authlib.integrations.flask_client import OAuth
 
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 application = Flask(__name__, static_url_path='/static', static_folder='static')
-
 application.config['SECRET_KEY'] = '9OLWxND4o83j4K4iShtef'
 application.config['SESSION_COOKIE_NAME'] = 'gate_ctrl'
 
-application.config['MAIL_SERVER'] = settings.MAIL_SERVER
-application.config['MAIL_PORT'] = 465
-application.config['MAIL_USERNAME'] = settings.MAIL_USERNAME
-application.config["MAIL_PASSWORD"] = settings.MAIL_PASSWORD
-application.config["MAIL_USE_TLS"] = False
-application.config["MAIL_USE_SSL"] = False
+LIFESIGN_TIMEOUT = 20
+CLIENT_SECRETS_FILE = "client_secret.json"
 
-mail = Mail(application)
+with open(CLIENT_SECRETS_FILE) as f:
+    client_secrets = json.load(f)['web']  # Assumes the JSON structure is under 'web'
+
+# Configure OAuth
+oauth = OAuth(application)
+google = oauth.register(
+    name='google',
+    client_id=client_secrets['client_id'],
+    client_secret=client_secrets['client_secret'],
+    access_token_url=client_secrets['token_uri'],
+    access_token_params=None,
+    authorize_url=client_secrets['auth_uri'],
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    userinfo_endpoint='https://www.googleapis.com/oauth2/v3/userinfo',
+    client_kwargs={'scope': 'email'},
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
+)
 
 
 @application.before_request
@@ -43,14 +54,9 @@ def teardown_request(exception):
         database.close_db(g.db)
 
 
-@application.route('/logout')
-def logout():
-    token = request.cookies.get('token')
-    user = database.get_user(db=g.db, token=token)
-    if user:
-        database.update_user(db=g.db, email=user["email"], token="")
-
-    return redirect(url_for('index'))
+@application.route('/authorize')
+def authorize():
+    return google.authorize_redirect(url_for('oauth2callback', _external=True))
 
 
 @application.route('/login', methods=['GET'])
@@ -58,20 +64,17 @@ def login():
     return render_template('login.html')
 
 
-@application.route('/login', methods=['POST'])
-def login_post():
-    email = request.form.get('email')
-    password = request.form.get('password')
+@application.route('/oauth2callback')
+def oauth2callback():
+    google.authorize_access_token()
+    resp = google.get('userinfo')
+    user_info = resp.json()
+    email = user_info["email"]
 
     user = database.get_user(db=g.db, email=email)
 
     if not user:
-        flash('Invalid e-mail or password')
-        return redirect(url_for('login'))
-
-    encrypted_pass = helper.hash_password(password)
-    if encrypted_pass != user["password"]:
-        flash('Invalid e-mail or password.')
+        flash('You are not authorized to access this app. Please contact the administrator: ujagaga@gmail.com')
         return redirect(url_for('login'))
 
     token = helper.generate_token()
@@ -182,77 +185,6 @@ def unlock():
     return render_template('unlock.html', relay_id=relay_index)
 
 
-@application.route('/reset_password', methods=['GET'])
-def reset_password():
-    return render_template('reset_password.html')
-
-
-@application.route('/reset_password', methods=['POST'])
-def reset_password_post():
-    email = request.form.get('email')
-    user = database.get_user(db=g.db, email=email)
-
-    flash('If the provided e-mail address is in our database, we will send you a reset link.')
-    if user:
-        token = helper.generate_token()
-        database.update_user(db=g.db, email=email, token=token)
-
-        base_url = request.base_url.replace("reset_password", "set_password")
-
-        reset_link = f"{base_url}?token={token}"
-        mail_message = Message('Reset unlock portal password.', sender="do_not_reply@door.lock",
-                               recipients=[email])
-        mail_message.html = "<p>To reset your password, klick the following <a href='{}'>link</a>.</p>".format(
-            reset_link)
-
-        mail.send(mail_message)
-
-    return redirect(url_for('index'))
-
-
-@application.route('/set_password', methods=['GET'])
-def set_password():
-    args = request.args
-    token = args.get("token")
-
-    user = database.get_user(db=g.db, token=token)
-    if not user:
-        abort(404)
-
-    return render_template('set_password.html', token=token)
-
-
-@application.route('/set_password', methods=['POST'])
-def set_password_post():
-    password_1 = request.form.get('password_1')
-    password_2 = request.form.get('password_2')
-    token = request.form.get('token')
-    user = database.get_user(db=g.db, token=token)
-
-    if not user:
-        flash("Error: Invalid token or expired link!")
-        return redirect(url_for('index'))
-
-    if password_1 != password_2:
-        flash("Error: Passwords are not the same!")
-        return redirect(url_for('set_password', token=token))
-
-    ret_val = helper.validate_password(password_1)
-
-    if ret_val == 0:
-        hashed_password = helper.hash_password(password_1)
-        database.update_user(db=g.db, email=user["email"], password=hashed_password)
-
-        flash("Your password was changed successfully. You may now use it to login.")
-        return redirect(url_for('login'))
-    else:
-        if ret_val == 0:
-            flash("Error: Password can not contain empty spaces!")
-        else:
-            flash("Error: Password can not be shorter than 5 characters!")
-        return redirect(url_for('set_password', token=token))
-
-
 @application.route('/config', methods=['GET'])
 def config():
     token = request.cookies.get('token')
@@ -287,3 +219,14 @@ def config_post():
     database.update_user(db=g.db, email=user["email"], data=json.dumps(data))
 
     return redirect(url_for('index'))
+
+
+if __name__ == '__main__':
+    # When running locally, disable OAuthlib's HTTPs verification.
+    # ACTION ITEM for developers:
+    #     When running in production *do not* leave this option enabled.
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+    # Specify a hostname and port that are set as a valid redirect URI
+    # for your API project in the Google API Console.
+    application.run(debug=True)
