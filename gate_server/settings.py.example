@@ -1,5 +1,6 @@
-MAIL_USERNAME = "your_mail_address@gmail.com"
-MAIL_PASSWORD = "your_app_password"
-MAIL_SERVER = "smtp.gmail.com"
-
 LIFESIGN_TIMEOUT = 120
+
+DB_HOST = "my_sql_host"
+DB_USER = "my_sql_db_user_password"
+DB_PASS = "db_pass"
+DB_NAME = "db_name"
