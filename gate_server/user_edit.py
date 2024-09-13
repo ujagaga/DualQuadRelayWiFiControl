@@ -39,34 +39,34 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    connection, db_cursor = database.open_db()
+    connection = database.open_db()
 
     if args.operation == 'list':
-        list_users(connection, db_cursor)
+        list_users(connection)
 
     elif args.operation == 'add':
         if not args.email:
             sys.exit("ERROR: Please provide email to create a new user")
 
         # Check if user with same username exists
-        user = database.get_user(connection, db_cursor, email=args.email)
+        user = database.get_user(connection, email=args.email)
         if user:
             sys.exit(f"ERROR: User exists: {user}")
 
         validate_email(args.email)
 
-        database.add_user(connection, db_cursor, email=args.email)
+        database.add_user(connection, email=args.email)
         print("Checking result:")
-        list_users(connection, db_cursor, email=args.email)
+        list_users(connection, email=args.email)
 
     elif args.operation == 'delete':
         if not args.email:
             sys.exit("ERROR: Please provide email of the user to delete.")
 
         print(f"INFO: Deleting user with email: {args.email}")
-        database.delete_user(connection, db_cursor, email=args.email)
+        database.delete_user(connection, email=args.email)
 
         print("Checking result:")
-        list_users(connection, db_cursor, email=args.email)
+        list_users(connection, email=args.email)
 
-    database.close_db(connection, db_cursor)
+    database.close_db(connection)

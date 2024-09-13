@@ -37,29 +37,29 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    connection, db_cursor = database.open_db()
+    connection = database.open_db()
 
     if args.list:
-        list_devices(connection, db_cursor)
+        list_devices(connection)
 
     if args.delete:
         if not args.name:
             sys.exit("ERROR: Please provide name of the device to delete.")
 
         print(f"INFO: Deleting device with name: {args.name}")
-        database.delete_device(connection, db_cursor, name=args.name)
+        database.delete_device(connection, name=args.name)
 
         print("Checking result:")
-        list_devices(connection, db_cursor, name=args.name)
+        list_devices(connection, name=args.name)
 
     elif args.authorize:
         if not args.name:
             sys.exit("ERROR: Please provide device name.")
         new_email = args.authorize
 
-        device = database.get_device(connection, db_cursor, name=args.name)
+        device = database.get_device(connection, name=args.name)
 
-        user = database.get_user(connection, db_cursor, email=new_email)
+        user = database.get_user(connection, email=new_email)
         if not user:
             sys.exit("ERROR: Specified user is not found in database.")
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         for email in email_list:
             new_list = f"{new_list}|{email}"
         new_list += "|"
-        database.update_device(connection, db_cursor, name=args.name, email=new_list)
+        database.update_device(connection, name=args.name, email=new_list)
 
     elif args.unauthorize:
         if not args.name:
@@ -81,9 +81,9 @@ if __name__ == '__main__':
 
         old_email = args.authorize
 
-        device = database.get_device(connection, db_cursor, name=args.name)
+        device = database.get_device(connection, name=args.name)
 
-        user = database.get_user(connection, db_cursor, email=old_email)
+        user = database.get_user(connection, email=old_email)
 
         if not user:
             sys.exit("ERROR: Specified user is not found in database.")
@@ -95,6 +95,6 @@ if __name__ == '__main__':
         for email in email_list:
             new_list = f"{new_list}|{email}"
         new_list += "|"
-        database.update_device(connection, db_cursor, name=args.name, email=new_list)
+        database.update_device(connection, name=args.name, email=new_list)
 
-    database.close_db(connection, db_cursor)
+    database.close_db(connection)
