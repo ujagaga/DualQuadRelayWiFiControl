@@ -20,7 +20,7 @@ def init_database(connection):
 
 
 def check_table_exists(connection, tablename):
-    connection.cursor.execute("SHOW TABLES LIKE '{}';".format(tablename))
+    connection.cursor().execute("SHOW TABLES LIKE '{}';".format(tablename))
     data = connection.cursor.fetchone()
     print(f"RESULT: {data}")
     result = False
