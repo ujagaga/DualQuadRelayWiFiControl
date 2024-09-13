@@ -14,9 +14,11 @@ def open_db():
         host=settings.DB_HOST,
         user=settings.DB_USER,
         passwd=settings.DB_PASS,
-        database=settings.DB_NAME
+        database=settings.DB_NAME,
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
     )
-    db_cursor = connection.cursor(buffered=True)
+    db_cursor = connection.cursor()
     return (connection, db_cursor)
 
 

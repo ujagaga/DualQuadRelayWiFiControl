@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-pip install flask authlib requests
+pip install flask authlib requests pymysql
 '''
 from flask import Flask, g, render_template, request, flash, url_for, redirect, make_response, Response, stream_with_context
 import time
