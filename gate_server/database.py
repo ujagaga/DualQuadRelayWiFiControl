@@ -20,13 +20,14 @@ def init_database(connection):
 
 
 def check_table_exists(connection, tablename):
-    connection.cursor().execute("SHOW TABLES LIKE '{}';".format(tablename))
-    data = connection.cursor().fetchone()
+    cursor = connection.cursor()
+    cursor.execute("SHOW TABLES LIKE '{}';".format(tablename))
+    data = cursor.fetchone()
     print(f"RESULT: {data}")
     result = False
     if data:
         result = True
-    connection.cursor().close()
+    cursor.close()
 
     return result
 
@@ -48,11 +49,7 @@ def open_db():
 
 
 def close_db(connection):
-    connection.cursor().close()
     connection.close()
-
-
-
 
 
 def add_user(connection, email: str):
