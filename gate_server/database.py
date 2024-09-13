@@ -55,6 +55,7 @@ def close_db(connection):
 def add_user(connection, email: str):
     sql = f"INSERT INTO users (email) VALUES ('{email}',)"
 
+    print(f"ADD SQL: {sql}")
     try:
         connection.cursor().execute(sql)
         connection.commit()
