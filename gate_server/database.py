@@ -86,11 +86,12 @@ def get_user(connection, email: str = None, token: str = None):
 
     user = None
     try:
-        connection.cursor().execute(sql)
+        cursor = connection.cursor()
+        cursor.execute(sql)
         if one:
-            user = connection.cursor().fetchone()
+            user = cursor.fetchone()
         else:
-            user = connection.cursor().fetchall()
+            user = cursor.fetchall()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
@@ -140,11 +141,12 @@ def get_device(connection, name: str = None, email: str = None):
         one = False
 
     try:
-        connection.cursor().execute(sql)
+        cursor = connection.cursor()
+        cursor.execute(sql)
         if one:
-            device = connection.cursor().fetchone()
+            device = cursor.fetchone()
         else:
-            device = connection.cursor().fetchall()
+            device = cursor.fetchall()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
