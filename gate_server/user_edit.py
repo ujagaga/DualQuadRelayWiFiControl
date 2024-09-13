@@ -41,6 +41,8 @@ if __name__ == '__main__':
 
     connection = database.open_db()
 
+    database.init_database(connection)
+
     if args.operation == 'list':
         list_users(connection)
 

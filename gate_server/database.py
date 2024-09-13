@@ -9,27 +9,30 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 db_path = os.path.join(current_path, "database.db")
 
 
-def init_database(connection):
-
-    sql = "create table users (email TEXT NOT NULL UNIQUE, token TEXT UNIQUE, data TEXT)"
-    connection.cursor().execute(sql)
-
-    sql = "create table devices (name TEXT NOT NULL UNIQUE, email TEXT, ping_at TEXT, set_at TEXT, relay_id TEXT)"
-    connection.cursor().execute(sql)
-    connection.commit()
-
-
 def check_table_exists(connection, tablename):
     cursor = connection.cursor()
     cursor.execute("SHOW TABLES LIKE '{}';".format(tablename))
     data = cursor.fetchone()
-    print(f"RESULT: {data}")
     result = False
     if data:
         result = True
     cursor.close()
 
     return result
+
+
+def init_database(connection):
+    cursor = connection.cursor()
+
+    if not check_table_exists(connection, "users"):
+        sql = "create table users (email TEXT NOT NULL UNIQUE, token TEXT UNIQUE, data TEXT)"
+        cursor.execute(sql)
+        connection.commit()
+
+    if not check_table_exists(connection, "devices"):
+        sql = "create table devices (name TEXT NOT NULL UNIQUE, email TEXT, ping_at TEXT, set_at TEXT, relay_id TEXT)"
+        cursor.execute(sql)
+        connection.commit()
 
 
 def open_db():
@@ -41,9 +44,6 @@ def open_db():
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor
     )
-
-    if not check_table_exists(connection, "users"):
-        init_database(connection)
 
     return connection
 
@@ -83,6 +83,8 @@ def get_user(connection, email: str = None, token: str = None):
     else:
         sql = f"SELECT * FROM users"
         one = False
+
+    print(f"SQL: {sql}")
 
     user = None
     try:
