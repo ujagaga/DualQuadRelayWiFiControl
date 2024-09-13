@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 '''
@@ -13,20 +13,22 @@ import database
 import helper
 from authlib.integrations.flask_client import OAuth
 
-
+print(1)
 sys.path.insert(0, os.path.dirname(__file__))
 
+print(2)
 application = Flask(__name__, static_url_path='/static', static_folder='static')
 application.config['SECRET_KEY'] = '9OLWxND4o83j4K4iShtef'
 application.config['SESSION_COOKIE_NAME'] = 'gate_ctrl'
 
+print(3)
 LIFESIGN_TIMEOUT = 20
 CLIENT_SECRETS_FILE = "client_secret.json"
 
-print(1)
+print(4)
 with open(CLIENT_SECRETS_FILE) as f:
     client_secrets = json.load(f)['web']  # Assumes the JSON structure is under 'web'
-print(2)
+print(5)
 # Configure OAuth
 oauth = OAuth(application)
 google = oauth.register(
@@ -43,7 +45,7 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
 )
 
-print(3)
+
 @application.before_request
 def before_request():
     g.db = database.open_db()
