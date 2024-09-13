@@ -17,16 +17,14 @@ from logging.handlers import RotatingFileHandler
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+logging.basicConfig(handlers=[RotatingFileHandler(os.path.join(os.path.dirname(__file__),'app.log'), maxBytes=10000, backupCount=10)],
+        level=logging.DEBUG,
+        format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+        datefmt='%Y-%m-%dT%H:%M:%S')
+
 application = Flask(__name__, static_url_path='/static', static_folder='static')
 application.config['SECRET_KEY'] = '9OLWxND4o83j4K4iShtef'
 application.config['SESSION_COOKIE_NAME'] = 'gate_ctrl'
-
-handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
-handler.setFormatter(formatter)
-
-application.logger.addHandler(handler)
 
 LIFESIGN_TIMEOUT = 20
 CLIENT_SECRETS_FILE = "client_secret.json"
