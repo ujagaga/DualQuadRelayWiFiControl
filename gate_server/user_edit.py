@@ -7,8 +7,8 @@ import database
 import helper
 
 
-def list_users(connection, db_cursor, email: str = None):
-    users = database.get_user(connection, db_cursor, email=email)
+def list_users(db_connection, email: str = None):
+    users = database.get_user(db_connection, email=email)
     message = "INFO: Listing users in database"
 
     if email:
