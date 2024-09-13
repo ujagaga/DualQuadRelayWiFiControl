@@ -1,34 +1,38 @@
 import sys
-import sqlite3
+import settings
+import pymysql
 import os
+
+pymysql.install_as_MySQLdb()
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 db_path = os.path.join(current_path, "database.db")
 
 
-def init_database():
-    if not os.path.isfile(db_path):
-        # Database does not exist. Create one
-        db = sqlite3.connect(db_path)
-
-        sql = "create table users (email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, token TEXT UNIQUE, data TEXT)"
-        db.execute(sql)
-        db.commit()
-
-        sql = "create table devices (name TEXT NOT NULL UNIQUE, email TEXT, ping_at TEXT, set_at TEXT, relay_id TEXT)"
-        db.execute(sql)
-        db.commit()
-
-        db.close()
-
-
 def open_db():
-    init_database()
-    return sqlite3.connect(db_path)
+    connection = pymysql.connect(
+        host=settings.DB_HOST,
+        user=settings.DB_USER,
+        passwd=settings.DB_PASS,
+        database=settings.DB_NAME
+    )
+    db_cursor = connection.cursor(buffered=True)
+    return (connection, db_cursor)
 
 
-def close_db(db):
-    db.close()
+def close_db(connection, db_cursor):
+    db_cursor.close()
+    connection.close()
+
+
+def init_database(connection, db_cursor):
+
+    sql = "create table users (email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, token TEXT UNIQUE, data TEXT)"
+    db_cursor.execute(sql)
+
+    sql = "create table devices (name TEXT NOT NULL UNIQUE, email TEXT, ping_at TEXT, set_at TEXT, relay_id TEXT)"
+    db_cursor.execute(sql)
+    connection.commit()
 
 
 def query_db(db, query, args=(), one=False):
@@ -44,35 +48,51 @@ def exec_db(db, query):
         db.commit()
 
 
-def add_user(db, email: str, password: str = None):
+def add_user(connection, db_cursor, email: str, password: str = None):
     sql = f"INSERT INTO users(email, password) VALUES ('{email}', '{password}')"
 
     try:
-        exec_db(db, sql)
+        db_cursor.execute(sql)
+        connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print("ERROR adding user to db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
 
-
-def delete_user(db, email: str,):
+def delete_user(connection, db_cursor, email: str,):
     sql = f"DELETE FROM users WHERE email = '{email}'"
 
     try:
-        exec_db(db, sql)
+        db_cursor.execute(sql)
+        connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print("ERROR removing user from db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
 
 
-def get_user(db, email: str = None, token: str = None):
+def get_user(connection, db_cursor, email: str = None, token: str = None):
     one = True
     if email:
         sql = f"SELECT * FROM users WHERE email = '{email}'"
     elif token:
         sql = f"SELECT * FROM users WHERE token = '{token}'"
+    else:
+        sql = f"SELECT * FROM users"
+        one = False
 
     try:
-        user = query_db(db, sql, one=one)
+        db_cursor.execute(sql)
+        if one:
+            data = db_cursor.fetchone()
+            if data:
+                user = {"email": data[0], "password": data[1], "token": data[2]}
+            else:
+                user = None
+        else:
+            user = []
+            raw_data = db_cursor.fetchall()
+            if raw_data:
+                for data in raw_data:
+                    user.append({"email": data[0], "password": data[1], "token": data[2], "role": data[3]})
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
@@ -81,8 +101,8 @@ def get_user(db, email: str = None, token: str = None):
     return user
 
 
-def update_user(db, email: str, token: str = None, password: str = None, data: str = None):
-    user = get_user(db=db, email=email)
+def update_user(connection, db_cursor, email: str, token: str = None, password: str = None, data: str = None):
+    user = get_user(connection, db_cursor, email=email)
 
     if user:
         if token is not None:
@@ -96,32 +116,38 @@ def update_user(db, email: str, token: str = None, password: str = None, data: s
               "".format(user["token"], user["password"], user["data"], email)
 
         try:
-            exec_db(db, sql)
+            db_cursor.execute(sql)
+            connection.commit()
         except Exception as exc:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print("ERROR updating user in db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
 
 
-def add_device(db, name: str):
+def add_device(connection, db_cursor, name: str):
     sql = f"INSERT INTO devices (name, email) VALUES ('{name}', 'None')"
 
     try:
-        exec_db(db, sql)
+        db_cursor.execute(sql)
+        connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print("ERROR adding device to db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
 
 
-def get_device(db, name: str = None, email: str = None):
-    if name is not None:
+def get_device(connection, db_cursor, name: str = None, email: str = None):
+    one = True
+    if name:
         sql = f"SELECT * FROM devices WHERE name = '{name}'"
-        one = True
     else:
         sql = f"SELECT * FROM devices WHERE email = '{email}'"
         one = False
 
     try:
-        device = query_db(db, sql, one=one)
+        db_cursor.execute(sql)
+        if one:
+            device = db_cursor.fetchone()
+        else:
+            device = db_cursor.fetchall()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
@@ -130,8 +156,8 @@ def get_device(db, name: str = None, email: str = None):
     return device
 
 
-def update_device(db, name: str, ping_at: str = None, set_at: str = None, relay_id: str = None):
-    device = get_device(db=db, name=name)
+def update_device(connection, db_cursor, name: str, ping_at: str = None, set_at: str = None, relay_id: str = None):
+    device = get_device(connection, db_cursor, name=name)
 
     if device:
         if ping_at:
@@ -140,7 +166,8 @@ def update_device(db, name: str, ping_at: str = None, set_at: str = None, relay_
             sql = "UPDATE devices SET set_at = '{}', relay_id = '{}' WHERE name = '{}'".format(set_at, relay_id, name)
 
         try:
-            exec_db(db, sql)
+            db_cursor.execute(sql)
+            connection.commit()
         except Exception as exc:
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            print("ERROR updating user in db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
+            print("ERROR updating device in db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
