@@ -12,21 +12,21 @@ db_path = os.path.join(current_path, "database.db")
 def init_database(connection):
 
     sql = "create table users (email TEXT NOT NULL UNIQUE, token TEXT UNIQUE, data TEXT)"
-    connection.cursor.execute(sql)
+    connection.cursor().execute(sql)
 
     sql = "create table devices (name TEXT NOT NULL UNIQUE, email TEXT, ping_at TEXT, set_at TEXT, relay_id TEXT)"
-    connection.cursor.execute(sql)
+    connection.cursor().execute(sql)
     connection.commit()
 
 
 def check_table_exists(connection, tablename):
     connection.cursor().execute("SHOW TABLES LIKE '{}';".format(tablename))
-    data = connection.cursor.fetchone()
+    data = connection.cursor().fetchone()
     print(f"RESULT: {data}")
     result = False
     if data:
         result = True
-    connection.cursor.close()
+    connection.cursor().close()
 
     return result
 
@@ -48,7 +48,7 @@ def open_db():
 
 
 def close_db(connection):
-    connection.cursor.close()
+    connection.cursor().close()
     connection.close()
 
 
@@ -59,7 +59,7 @@ def add_user(connection, email: str):
     sql = f"INSERT INTO users(email) VALUES ('{email}',)"
 
     try:
-        connection.cursor.execute(sql)
+        connection.cursor().execute(sql)
         connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -70,7 +70,7 @@ def delete_user(connection, email: str):
     sql = f"DELETE FROM users WHERE email = '{email}'"
 
     try:
-        connection.cursor.execute(sql)
+        connection.cursor().execute(sql)
         connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -89,11 +89,11 @@ def get_user(connection, email: str = None, token: str = None):
 
     user = None
     try:
-        connection.cursor.execute(sql)
+        connection.cursor().execute(sql)
         if one:
-            user = connection.cursor.fetchone()
+            user = connection.cursor().fetchone()
         else:
-            user = connection.cursor.fetchall()
+            user = connection.cursor().fetchall()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
@@ -116,7 +116,7 @@ def update_user(connection, email: str, token: str = None, password: str = None,
               "".format(user["token"], user["password"], user["data"], email)
 
         try:
-            connection.cursor.execute(sql)
+            connection.cursor().execute(sql)
             connection.commit()
         except Exception as exc:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -127,7 +127,7 @@ def add_device(connection, name: str):
     sql = f"INSERT INTO devices (name, email) VALUES ('{name}', 'None')"
 
     try:
-        connection.cursor.execute(sql)
+        connection.cursor().execute(sql)
         connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -143,11 +143,11 @@ def get_device(connection, name: str = None, email: str = None):
         one = False
 
     try:
-        connection.cursor.execute(sql)
+        connection.cursor().execute(sql)
         if one:
-            device = connection.cursor.fetchone()
+            device = connection.cursor().fetchone()
         else:
-            device = connection.cursor.fetchall()
+            device = connection.cursor().fetchall()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
@@ -170,7 +170,7 @@ def update_device(
             sql = "UPDATE devices SET set_at = '{}', relay_id = '{}' WHERE name = '{}'".format(set_at, relay_id, name)
 
         try:
-            connection.cursor.execute(sql)
+            connection.cursor().execute(sql)
             connection.commit()
         except Exception as exc:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -181,7 +181,7 @@ def delete_device(connection, name: str):
     sql = f"DELETE FROM devices WHERE name = '{name}'"
 
     try:
-        connection.cursor.execute(sql)
+        connection.cursor().execute(sql)
         connection.commit()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
