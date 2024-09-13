@@ -27,7 +27,7 @@ def close_db(connection, db_cursor):
 
 def init_database(connection, db_cursor):
 
-    sql = "create table users (email TEXT NOT NULL UNIQUE, password TEXT NOT NULL, token TEXT UNIQUE, data TEXT)"
+    sql = "create table users (email TEXT NOT NULL UNIQUE, token TEXT UNIQUE, data TEXT)"
     db_cursor.execute(sql)
 
     sql = "create table devices (name TEXT NOT NULL UNIQUE, email TEXT, ping_at TEXT, set_at TEXT, relay_id TEXT)"
@@ -35,21 +35,8 @@ def init_database(connection, db_cursor):
     connection.commit()
 
 
-def query_db(db, query, args=(), one=False):
-    cur = db.execute(query, args)
-    rv = [dict((cur.description[idx][0], value)
-               for idx, value in enumerate(row)) for row in cur.fetchall()]
-    return (rv[0] if rv else None) if one else rv
-
-
-def exec_db(db, query):
-    db.execute(query)
-    if not query.startswith('SELECT'):
-        db.commit()
-
-
-def add_user(connection, db_cursor, email: str, password: str = None):
-    sql = f"INSERT INTO users(email, password) VALUES ('{email}', '{password}')"
+def add_user(connection, db_cursor, email: str):
+    sql = f"INSERT INTO users(email) VALUES ('{email}',)"
 
     try:
         db_cursor.execute(sql)
@@ -58,7 +45,8 @@ def add_user(connection, db_cursor, email: str, password: str = None):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print("ERROR adding user to db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
 
-def delete_user(connection, db_cursor, email: str,):
+
+def delete_user(connection, db_cursor, email: str):
     sql = f"DELETE FROM users WHERE email = '{email}'"
 
     try:
@@ -79,24 +67,16 @@ def get_user(connection, db_cursor, email: str = None, token: str = None):
         sql = f"SELECT * FROM users"
         one = False
 
+    user = None
     try:
         db_cursor.execute(sql)
         if one:
-            data = db_cursor.fetchone()
-            if data:
-                user = {"email": data[0], "password": data[1], "token": data[2]}
-            else:
-                user = None
+            user = db_cursor.fetchone()
         else:
-            user = []
-            raw_data = db_cursor.fetchall()
-            if raw_data:
-                for data in raw_data:
-                    user.append({"email": data[0], "password": data[1], "token": data[2], "role": data[3]})
+            user = db_cursor.fetchall()
     except Exception as exc:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         print(f"ERROR reading data on line {exc_tb.tb_lineno}!\n\t{exc}", flush=True)
-        user = None
 
     return user
 
@@ -156,12 +136,17 @@ def get_device(connection, db_cursor, name: str = None, email: str = None):
     return device
 
 
-def update_device(connection, db_cursor, name: str, ping_at: str = None, set_at: str = None, relay_id: str = None):
+def update_device(
+        connection, db_cursor,
+        name: str, ping_at: str = None, set_at: str = None, relay_id: str = None, email: str = None
+):
     device = get_device(connection, db_cursor, name=name)
 
     if device:
         if ping_at:
             sql = "UPDATE devices SET ping_at = '{}' WHERE name = '{}'".format(ping_at, name)
+        if email:
+            sql = "UPDATE devices SET email = '{}' WHERE name = '{}'".format(email, name)
         else:
             sql = "UPDATE devices SET set_at = '{}', relay_id = '{}' WHERE name = '{}'".format(set_at, relay_id, name)
 
@@ -171,3 +156,14 @@ def update_device(connection, db_cursor, name: str, ping_at: str = None, set_at:
         except Exception as exc:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print("ERROR updating device in db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)
+
+
+def delete_device(connection, db_cursor, name: str):
+    sql = f"DELETE FROM devices WHERE name = '{name}'"
+
+    try:
+        db_cursor.execute(sql)
+        connection.commit()
+    except Exception as exc:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        print("ERROR removing user from db on line {}!\n\t{}".format(exc_tb.tb_lineno, exc), flush=True)

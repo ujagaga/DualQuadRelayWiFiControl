@@ -4,9 +4,7 @@ from hashlib import sha256
 import re
 from datetime import datetime
 import sys
-import smtplib
-import settings
-import ssl
+
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -29,17 +27,6 @@ def validate_email(email: str):
         return False
     else:
         return True
-
-
-def validate_password(password: str):
-    if " " in password:
-        # Password can not contain spaces.
-        return 1
-    if len(password) < 5:
-        # Password can not be shorter than 5 characters.
-        return 2
-
-    return 0
 
 
 def string_to_date(valid_until: str):
