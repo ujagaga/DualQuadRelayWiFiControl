@@ -23,9 +23,10 @@ application.config['SESSION_COOKIE_NAME'] = 'gate_ctrl'
 LIFESIGN_TIMEOUT = 20
 CLIENT_SECRETS_FILE = "client_secret.json"
 
+print(1)
 with open(CLIENT_SECRETS_FILE) as f:
     client_secrets = json.load(f)['web']  # Assumes the JSON structure is under 'web'
-
+print(2)
 # Configure OAuth
 oauth = OAuth(application)
 google = oauth.register(
@@ -42,7 +43,7 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
 )
 
-
+print(3)
 @application.before_request
 def before_request():
     g.db = database.open_db()
