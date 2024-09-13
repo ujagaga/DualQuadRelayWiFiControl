@@ -55,7 +55,6 @@ def close_db(connection):
 def add_user(connection, email: str):
     sql = f"INSERT INTO users (email) VALUES ('{email}')"
 
-    print(f"ADD SQL: {sql}")
     try:
         connection.cursor().execute(sql)
         connection.commit()
@@ -84,8 +83,6 @@ def get_user(connection, email: str = None, token: str = None):
     else:
         sql = f"SELECT * FROM users"
         one = False
-
-    print(f"SQL: {sql}")
 
     user = None
     try:
