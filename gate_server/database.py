@@ -20,18 +20,17 @@ def init_database(connection):
 
 
 def check_table_exists(connection, tablename):
-    dbcur = connection.cursor()
     connection.cursor().execute("""
         SELECT COUNT(*)
         FROM information_schema.tables
         WHERE table_name = '{0}'
         """.format(tablename.replace('\'', '\'\'')))
-    if connection.cursor().fetchone()[0] == 1:
-        dbcur.close()
-        return True
-
+    data = connection.cursor().fetchone()
+    print(f"RESULT: {data}")
+    result = data[0] == 1
     connection.cursor().close()
-    return False
+
+    return result
 
 
 def open_db():
