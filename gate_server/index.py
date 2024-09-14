@@ -64,7 +64,7 @@ def teardown_request(exception):
 
 @application.route('/authorize')
 def authorize():
-    return google.authorize_redirect('/oauth2callback')
+    return google.authorize_redirect(f'https://{request.host}/oauth2callback')
 
 
 @application.route('/login', methods=['GET'])
@@ -79,14 +79,14 @@ def oauth2callback():
     user_info = resp.json()
     email = user_info["email"]
 
-    user = database.get_user(db=g.db, email=email)
+    user = database.get_user(connection=g.db, email=email)
 
     if not user:
         flash('You are not authorized to access this app. Please contact the administrator: ujagaga@gmail.com')
         return redirect('/login')
 
     token = helper.generate_token()
-    database.update_user(db=g.db, email=email, token=token)
+    database.update_user(connection=g.db, email=email, token=token)
 
     response = make_response(redirect('/'))
     response.set_cookie('token', token)
@@ -101,32 +101,32 @@ def device_get_status():
     if not name:
         return "Missing 'name' parameter", 400
 
-    relay_device = database.get_device(db=g.db, name=name)
+    relay_device = database.get_device(connection=g.db, name=name)
     if not relay_device:
-        unauthorized_devs = database.get_device(db=g.db, email="None")
+        unauthorized_devs = database.get_device(connection=g.db, email="None")
 
         if len(unauthorized_devs) < 2:
-            database.add_device(db=g.db, name=name)
+            database.add_device(connection=g.db, name=name)
 
         return "Unauthorized (Too many)", 401
 
     email = relay_device["email"]
-    user = database.get_user(db=g.db, email=email)
+    user = database.get_user(connection=g.db, email=email)
     if not user:
         return "Unauthorized (No user)", 401
 
     # Update device ping time
-    database.update_device(db=g.db, name=name, ping_at=f"{int(time.time())}")
+    database.update_device(connection=g.db, name=name, ping_at=f"{int(time.time())}")
 
     def stream_response():
         try:
             while True:
                 # Continuously check the database for updates
-                device = database.get_device(db=g.db, name=name)
+                device = database.get_device(connection=g.db, name=name)
                 if device["set_at"] and "None" not in device["set_at"]:
                     set_timestamp = int(device["set_at"])
                     if (time.time() - set_timestamp) < settings.LIFESIGN_TIMEOUT:
-                        database.update_device(db=g.db, name=name, set_at="None")
+                        database.update_device(connection=g.db, name=name, set_at="None")
                         yield f"{device['relay_id']}\n"
                         break
                 # Sleep for a short time to avoid overloading the server
@@ -146,7 +146,7 @@ def index():
     if not token:
         return redirect('/login')
 
-    user = database.get_user(db=g.db, token=token)
+    user = database.get_user(connection=g.db, token=token)
     if not user:
         return redirect('/login')
 
@@ -155,7 +155,7 @@ def index():
         data = json.loads(user["data"])
 
     connected_devices = []
-    devices = database.get_device(db=g.db, email=user["email"])
+    devices = database.get_device(connection=g.db, email=user["email"])
     if devices:
         for device in devices:
             ping_at = device.get("ping_at")
@@ -181,14 +181,14 @@ def unlock():
     if not token:
         return redirect('/login')
 
-    user = database.get_user(db=g.db, token=token)
+    user = database.get_user(connection=g.db, token=token)
     if not user:
         return redirect('/login')
 
-    devices = database.get_device(db=g.db, email=user["email"])
+    devices = database.get_device(connection=g.db, email=user["email"])
     if devices:
         for device in devices:
-            database.update_device(db=g.db, name=device["name"], set_at=f"{int(time.time())}", relay_id=relay_index)
+            database.update_device(connection=g.db, name=device["name"], set_at=f"{int(time.time())}", relay_id=relay_index)
 
     return render_template('unlock.html', relay_id=relay_index)
 
@@ -199,7 +199,7 @@ def config():
     if not token:
         return redirect('/login')
 
-    user = database.get_user(db=g.db, token=token)
+    user = database.get_user(connection=g.db, token=token)
     if not user:
         return redirect('/login')
 
@@ -216,7 +216,7 @@ def config_post():
     if not token:
         return redirect('/login')
 
-    user = database.get_user(db=g.db, token=token)
+    user = database.get_user(connection=g.db, token=token)
     if not user:
         return redirect('/login')
 
@@ -224,7 +224,7 @@ def config_post():
     sec_btn_count = request.form.get('sec')
     data = {"prim": int(prim_btn_count), "sec": int(sec_btn_count)}
 
-    database.update_user(db=g.db, email=user["email"], data=json.dumps(data))
+    database.update_user(connection=g.db, email=user["email"], data=json.dumps(data))
 
     return redirect('/')
 
