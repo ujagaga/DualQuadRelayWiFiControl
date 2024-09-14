@@ -4,7 +4,7 @@
 '''
 pip install flask authlib requests pymysql
 '''
-from flask import Flask, g, render_template, request, flash, url_for, redirect, make_response, Response, stream_with_context
+from flask import Flask, g, render_template, request, flash, redirect, make_response, Response, stream_with_context
 import time
 import json
 import sys
@@ -15,6 +15,7 @@ from authlib.integrations.flask_client import OAuth
 import logging
 from logging.handlers import RotatingFileHandler
 from wsgiref.handlers import CGIHandler
+import settings
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -63,7 +64,7 @@ def teardown_request(exception):
 
 @application.route('/authorize')
 def authorize():
-    return google.authorize_redirect(url_for('oauth2callback', _external=True))
+    return google.authorize_redirect('/oauth2callback')
 
 
 @application.route('/login', methods=['GET'])
@@ -82,12 +83,12 @@ def oauth2callback():
 
     if not user:
         flash('You are not authorized to access this app. Please contact the administrator: ujagaga@gmail.com')
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     token = helper.generate_token()
     database.update_user(db=g.db, email=email, token=token)
 
-    response = make_response(redirect(url_for('index')))
+    response = make_response(redirect('/'))
     response.set_cookie('token', token)
     return response
 
@@ -143,11 +144,11 @@ def device_get_status():
 def index():
     token = request.cookies.get('token')
     if not token:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     user = database.get_user(db=g.db, token=token)
     if not user:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     data = {"prim": 4, "sec": 4}
     if user["data"] is not None and "None" not in user["data"]:
@@ -178,11 +179,11 @@ def unlock():
 
     token = request.cookies.get('token')
     if not token:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     user = database.get_user(db=g.db, token=token)
     if not user:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     devices = database.get_device(db=g.db, email=user["email"])
     if devices:
@@ -196,11 +197,11 @@ def unlock():
 def config():
     token = request.cookies.get('token')
     if not token:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     user = database.get_user(db=g.db, token=token)
     if not user:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     data = {"prim": 4, "sec": 4}
     if user["data"] and "None" not in user["data"]:
@@ -213,11 +214,11 @@ def config():
 def config_post():
     token = request.cookies.get('token')
     if not token:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     user = database.get_user(db=g.db, token=token)
     if not user:
-        return redirect(url_for('login'))
+        return redirect('/login')
 
     prim_btn_count = request.form.get('prim')
     sec_btn_count = request.form.get('sec')
@@ -225,12 +226,6 @@ def config_post():
 
     database.update_user(db=g.db, email=user["email"], data=json.dumps(data))
 
-    return redirect(url_for('index'))
+    return redirect('/')
 
 CGIHandler().run(application)
-
-# When running locally, disable OAuthlib's HTTPs verification.
-# ACTION ITEM for developers:
-#     When running in production *do not* leave this option enabled.
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-#application.run(debug=True)
