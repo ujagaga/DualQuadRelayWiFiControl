@@ -14,6 +14,7 @@ import helper
 from authlib.integrations.flask_client import OAuth
 import logging
 from logging.handlers import RotatingFileHandler
+from wsgiref.handlers import CGIHandler
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -226,13 +227,10 @@ def config_post():
 
     return redirect(url_for('index'))
 
+CGIHandler().run(application)
 
-if __name__ == '__main__':
-    # When running locally, disable OAuthlib's HTTPs verification.
-    # ACTION ITEM for developers:
-    #     When running in production *do not* leave this option enabled.
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
-    # Specify a hostname and port that are set as a valid redirect URI
-    # for your API project in the Google API Console.
-    application.run(debug=True)
+# When running locally, disable OAuthlib's HTTPs verification.
+# ACTION ITEM for developers:
+#     When running in production *do not* leave this option enabled.
+#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+#application.run(debug=True)
