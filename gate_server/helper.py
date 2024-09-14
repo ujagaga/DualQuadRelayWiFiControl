@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import string
 import random
 from hashlib import sha256
