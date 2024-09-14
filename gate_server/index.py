@@ -227,10 +227,10 @@ def config_post():
 
     return redirect(url_for('index'))
 
-CGIHandler().run(application)
+#CGIHandler().run(application)
 
 # When running locally, disable OAuthlib's HTTPs verification.
 # ACTION ITEM for developers:
 #     When running in production *do not* leave this option enabled.
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-#application.run(debug=True)
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+application.run(debug=True)
