@@ -99,19 +99,17 @@ def get_user(connection, email: str = None, token: str = None):
     return user
 
 
-def update_user(connection, email: str, token: str = None, password: str = None, data: str = None):
+def update_user(connection, email: str, token: str = None, data: str = None):
     user = get_user(connection, email=email)
 
     if user:
         if token is not None:
             user["token"] = token
-        if password:
-            user["password"] = password
         if data is not None:
             user["data"] = data
 
-        sql = "UPDATE users SET token = '{}', password = '{}', data = '{}' WHERE email = '{}'" \
-              "".format(user["token"], user["password"], user["data"], email)
+        sql = "UPDATE users SET token = '{}', data = '{}' WHERE email = '{}'" \
+              "".format(user["token"], user["data"], email)
 
         try:
             connection.cursor().execute(sql)
