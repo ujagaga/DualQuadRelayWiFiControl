@@ -4,7 +4,7 @@
 '''
 pip install flask authlib requests pymysql
 '''
-from flask import Flask, g, render_template, request, flash, redirect, make_response, Response, stream_with_context
+from flask import Flask, g, render_template, request, flash, redirect, make_response, Response, stream_with_context, url_for
 import time
 import json
 import sys
@@ -50,6 +50,13 @@ google = oauth.register(
 )
 
 
+def get_url(endpoint):
+    home_url = url_for('index')
+    resolved_url = url_for(endpoint).replace(home_url, '/')
+
+    return resolved_url
+
+
 @application.before_request
 def before_request():
     g.db = database.open_db()
@@ -63,7 +70,8 @@ def teardown_request(exception):
 
 @application.route('/authorize')
 def authorize():
-    return google.authorize_redirect(f'https://{request.host}/oauth2callback')
+    auth_url = get_url('oauth2callback')
+    return google.authorize_redirect(f"https://{request.host}{auth_url}")
 
 
 @application.route('/login', methods=['GET'])
@@ -82,12 +90,12 @@ def oauth2callback():
 
     if not user:
         flash('You are not authorized to access this app. Please contact the administrator: ujagaga@gmail.com')
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     token = helper.generate_token()
     database.update_user(connection=g.db, email=email, token=token)
 
-    response = make_response(redirect('/'))
+    response = make_response(redirect(get_url('index')))
     response.set_cookie('token', token)
     return response
 
@@ -143,11 +151,11 @@ def device_get_status():
 def index():
     token = request.cookies.get('token')
     if not token:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     user = database.get_user(connection=g.db, token=token)
     if not user:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     data = {"prim": 4, "sec": 4}
     if user["data"] is not None and "None" not in user["data"]:
@@ -178,11 +186,11 @@ def unlock():
 
     token = request.cookies.get('token')
     if not token:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     user = database.get_user(connection=g.db, token=token)
     if not user:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     devices = database.get_device(connection=g.db, email=user["email"])
     if devices:
@@ -196,11 +204,11 @@ def unlock():
 def config():
     token = request.cookies.get('token')
     if not token:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     user = database.get_user(connection=g.db, token=token)
     if not user:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     data = {"prim": 4, "sec": 4}
     if user["data"] and "None" not in user["data"]:
@@ -213,11 +221,11 @@ def config():
 def config_post():
     token = request.cookies.get('token')
     if not token:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     user = database.get_user(connection=g.db, token=token)
     if not user:
-        return redirect('/login')
+        return redirect(get_url('login'))
 
     prim_btn_count = request.form.get('prim')
     sec_btn_count = request.form.get('sec')
@@ -225,5 +233,5 @@ def config_post():
 
     database.update_user(connection=g.db, email=user["email"], data=json.dumps(data))
 
-    return redirect('/')
+    return redirect(get_url('index'))
 
