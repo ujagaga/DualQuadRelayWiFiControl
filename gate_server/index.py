@@ -14,7 +14,6 @@ import helper
 from authlib.integrations.flask_client import OAuth
 import logging
 from logging.handlers import RotatingFileHandler
-from wsgiref.handlers import CGIHandler
 import settings
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -228,4 +227,3 @@ def config_post():
 
     return redirect('/')
 
-CGIHandler().run(application)
